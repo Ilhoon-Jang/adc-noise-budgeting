@@ -1,4 +1,4 @@
-import streamlit as st # type: ignore
+import streamlit as st  # type: ignore
 import math
 
 # 📌 SI 단위 문자열 파싱 함수
@@ -37,6 +37,8 @@ fs_str = st.text_input("Full Scale Voltage (V)", "1")
 bits = st.number_input("Resolution (bits)", value=8, step=1)
 thermal_rms_str = st.text_input("Thermal Noise RMS (V)", "1m")
 c_sample_str = st.text_input("Sampling Cap (F, optional)", "1p")
+freq_str = st.text_input("Input Frequency (Hz)", "100M")
+jitter_str = st.text_input("Clock Jitter RMS (s)", "1p")
 use_c = st.checkbox("Include kT/C Noise?", value=True)
 
 # 계산
@@ -45,6 +47,8 @@ if st.button("🔍 Calculate SNR and ENOB"):
         fs = parse_si_string(fs_str)
         thermal_rms = parse_si_string(thermal_rms_str)
         c_sample = parse_si_string(c_sample_str) if use_c else None
+        f_in = parse_si_string(freq_str)
+        t_jitter = parse_si_string(jitter_str)
         kT = 4.14e-21  # at 300K
 
         # Quantization noise
@@ -58,8 +62,13 @@ if st.button("🔍 Calculate SNR and ENOB"):
         # kT/C noise
         p_kTC = kT / c_sample if use_c and c_sample else 0
 
+        # Jitter noise
+        v_peak = fs / 2  # full-scale sinewave peak
+        v_jitter_rms = 2 * math.pi * f_in * v_peak * t_jitter
+        p_jitter = v_jitter_rms ** 2
+
         # Total noise
-        p_total_noise = p_q + p_thermal + p_kTC
+        p_total_noise = p_q + p_thermal + p_kTC + p_jitter
 
         # Signal power (full-scale sine wave)
         v_signal_rms = fs / (2 * math.sqrt(2))
@@ -77,6 +86,7 @@ if st.button("🔍 Calculate SNR and ENOB"):
         - **Quantization Noise Power**: `{p_q * 1e6:.3f} µV²`  
         - **Thermal Noise Power**: `{p_thermal * 1e6:.3f} µV²`  
         - **kT/C Noise Power**: `{p_kTC * 1e6:.3f} µV²`  
+        - **Jitter Noise Power**: `{p_jitter * 1e6:.3f} µV²`  
         - **Total Noise Power**: `{p_total_noise * 1e6:.3f} µV²`  
         - **SNR**: `{snr:.2f} dB`  
         - **ENOB**: `{enob:.2f} bits`
