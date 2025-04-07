@@ -59,8 +59,8 @@ if st.button("🔍 Calculate SNR and ENOB"):
         # Thermal noise
         p_thermal = thermal_rms ** 2
 
-        # kT/C noise
-        p_kTC = kT / c_sample if use_c and c_sample else 0
+        # kT/C noise differential
+        p_kTC = 2 * kT / c_sample if use_c and c_sample else 0
 
         # Jitter noise
         v_peak = fs / 2  # full-scale sinewave peak
